@@ -27,13 +27,17 @@ function ScriptSelectList({
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        try {
-          const parsedCustomScript = customScript && JSON.parse(customScript);
-          // TODO: verify parsedCustomScript is correct type
-          handleSubmit(selectedScript, parsedCustomScript);
-          setErrorMsg("");
-        } catch (e) {
-          setErrorMsg("Custom script is not valid JSON.");
+        if (selectedScript === "custom-script") {
+          try {
+            const parsedCustomScript = ValidateCustomScript(customScript);
+            handleSubmit(selectedScript, parsedCustomScript);
+            setErrorMsg("");
+          } catch (e) {
+            const error = e as Error;
+            setErrorMsg(error.message);
+          }
+        } else {
+          handleSubmit(selectedScript, null);
         }
       }}
     >
@@ -95,6 +99,17 @@ function ScriptSelectList({
       </Flex>
     </form>
   );
+}
+
+function ValidateCustomScript(script: string) {
+  const parsed = JSON.parse(script);
+  if (!Array.isArray(parsed)) {
+    throw new Error("JSON is not an array.");
+  }
+  if (parsed.filter((obj) => !obj["id"]).length > 0) {
+    throw new Error("Role element missing 'id'");
+  }
+  return parsed;
 }
 
 export default ScriptSelectList;
