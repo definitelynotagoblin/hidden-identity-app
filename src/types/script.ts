@@ -8,7 +8,7 @@ export interface Character {
   id: string;
   name: string;
   team: string;
-  imageSrc: string;
+  imageSrc?: string;
 }
 
 export interface CharacterId {

@@ -78,7 +78,10 @@ export function Lobby({ rolesList }: LobbyProps) {
         <Flex direction="column" gap="3" py="3">
           <CharacterSelectList state={characterSelectState} />
           <TeamDistributionBar
-            charsSelected={characterSelectState.characters.filter(
+            charsSelected={[
+              ...characterSelectState.characters,
+              ...characterSelectState.additionalCharacters.value,
+            ].filter(
               ({ name }) => characterSelectState.selectedRoles.value[name],
             )}
           />

@@ -27,7 +27,6 @@ function GamemasterLanding({ providedGMHash }: { providedGMHash: string }) {
 
   function setRoles(roleIds: CharacterId[] = []) {
     const ids = roleIds?.map(({ id }) => id);
-    console.log(ids);
     const roles = Roles.characters.filter(({ id }) => ids?.includes(id));
     setCharacters(roles);
   }
@@ -50,8 +49,9 @@ function GamemasterLanding({ providedGMHash }: { providedGMHash: string }) {
           if (customScript) {
             setRoles(customScript);
           } else {
-            const roleIds = Scripts.scripts.find(({ name }) => name === script)
-              ?.characters;
+            const roleIds = Scripts.scripts.find(
+              ({ name }) => name === script,
+            )!.characters;
             setRoles(roleIds);
           }
           setMode("lobby");

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Character, CharacterType, CharacterTypes } from "../types/script";
+import DefaultRoleImageSrc from "../assets/default_role.svg";
 import {
   Checkbox,
   Flex,
@@ -53,14 +54,31 @@ export function CharacterSelectList({
   const [newCharacterName, setNewCharacterName] = useState("");
   const [newCharacterTeam, setNewCharacterTeam] =
     useState<CharacterType>("Townsfolk");
+
   function addNewCharacter() {
+    if (
+      state.additionalCharacters.value.find(({ id }) => id === newCharacterName)
+    ) {
+      return;
+    }
+
     state.additionalCharacters.set((curr) => [
       ...curr,
       // TODO: prevent duplicates
-      { imageSrc: "", name: newCharacterName, team: newCharacterTeam },
+      {
+        id: newCharacterName,
+        name: newCharacterName,
+        imageSrc: undefined,
+        team: newCharacterTeam,
+      },
     ]);
+    state.selectedRoles.set((selectedroles) => ({
+      ...selectedroles,
+      [newCharacterName]: true,
+    }));
     setNewCharacterName("");
   }
+
   return (
     <Flex gap="2" direction="column">
       {[...state.characters, ...state.additionalCharacters.value].map(
@@ -72,14 +90,14 @@ export function CharacterSelectList({
               onClick={() => {
                 state.selectedRoles.set((selectedroles) => ({
                   ...selectedroles,
-                  [name]: true,
+                  [name]: !selectedroles[name],
                 }));
               }}
             />
             <Flex gap="1" align={"center"} key={name} asChild>
               <label style={{ flex: 1 }} htmlFor={name}>
                 <img
-                  src={imageSrc ?? "./src/assets/default_role.svg"}
+                  src={imageSrc ?? DefaultRoleImageSrc}
                   height={"70px"}
                   width={"70px"}
                 />
