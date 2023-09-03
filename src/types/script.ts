@@ -1,5 +1,6 @@
 export interface Script {
   name: string;
+  imageSrc: string;
   characters: Character[];
 }
 

@@ -73,7 +73,7 @@ function GamemasterLanding({ providedGMHash }: { providedGMHash: string }) {
           Scripts
         </Heading>
         <ScriptSelectList
-          handleChange={(selected) =>
+          handleSubmit={(selected) =>
             setScriptsSelected(
               Object.keys(selected).filter((script) => selected[script]),
             )
