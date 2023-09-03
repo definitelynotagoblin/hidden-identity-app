@@ -12,12 +12,12 @@ import CharacterRoles from "../assets/game_data/roles.json";
 import TeamDistributionBar from "./TeamDistributionBar";
 
 interface CharacterSelectListProps {
-  selectedScripts: string[];
+  selectedScript: string;
   handleFormSubmit: () => void;
 }
 
 function CharacterSelectList({
-  selectedScripts,
+  selectedScript,
   handleFormSubmit,
 }: CharacterSelectListProps) {
   const [state, setState] = React.useState<Record<string, boolean>>({});
@@ -26,10 +26,8 @@ function CharacterSelectList({
   >([]);
   const [newCharacterName, setNewCharacterName] = React.useState<string>("");
   const scriptRoles = GameScripts.scripts
-    .filter(({ name }) => selectedScripts.includes(name))
-    .map((script) => script.characters)
-    .flat()
-    .map(({ id }) => id);
+    .find(({ name }) => selectedScript === name)!
+    .characters.map(({ id }) => id);
   const characters = CharacterRoles.characters.filter(({ id }) =>
     scriptRoles.includes(id),
   );

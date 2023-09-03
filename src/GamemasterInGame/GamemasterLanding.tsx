@@ -45,7 +45,7 @@ function GamemasterLanding({ providedGMHash }: { providedGMHash: string }) {
     "lobby",
   );
   const [showCharSelect, setShowCharSelect] = React.useState(false);
-  const [scriptsSelected, setScriptsSelected] = React.useState<string[]>([]);
+  const [scriptSelected, setScriptSelected] = React.useState<string>("");
   const { gameId, game } = useGame();
 
   const availableRoles = [];
@@ -73,18 +73,14 @@ function GamemasterLanding({ providedGMHash }: { providedGMHash: string }) {
           Scripts
         </Heading>
         <ScriptSelectList
-          handleSubmit={(selected) =>
-            setScriptsSelected(
-              Object.keys(selected).filter((script) => selected[script]),
-            )
-          }
+          handleSubmit={(selected) => setScriptSelected(selected)}
         />
         <Separator size="4" color="tomato" />
         <Heading size={"4"} align={"center"} color="tomato">
           Roles
         </Heading>
         <CharacterSelectList
-          selectedScripts={scriptsSelected}
+          selectedScript={scriptSelected}
           handleFormSubmit={() => {
             setShowCharSelect(false);
           }}

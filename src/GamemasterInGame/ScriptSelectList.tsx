@@ -28,7 +28,7 @@ function ScriptSelectList({
       onSubmit={(event) => {
         event.preventDefault();
         try {
-          const parsedCustomScript = JSON.parse(customScript);
+          const parsedCustomScript = customScript && JSON.parse(customScript);
           // TODO: verify parsedCustomScript is correct type
           handleSubmit(selectedScript, parsedCustomScript);
           setErrorMsg("");
