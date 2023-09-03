@@ -8,6 +8,7 @@ import { Self, UnifiedGame } from "./Game";
 import { useSecretKey } from "./secretKey";
 import { unifiedGamesCollection } from "./firebaseStore";
 import { useAction, useChangeGame, useGame } from "./GameContext";
+import { mapObject } from "../utils/mapObject";
 
 export function usePlayers() {
   const { game } = useGame();
@@ -16,6 +17,15 @@ export function usePlayers() {
 export function useRoles() {
   const { game } = useGame();
   return game?.playersToRoles;
+}
+
+export function usePlayersToRoles() {
+  const { game } = useGame();
+  if (!game) {
+    throw new Error("ASDFASDF");
+  }
+  const { players, playersToRoles } = game;
+  return mapObject(players, (hash, name) => [name, playersToRoles[hash]]);
 }
 
 export function useSelf() {
@@ -87,6 +97,7 @@ export function useDistributeRoles() {
     return {
       ...game,
       playersToRoles: randomRoleSet,
+      gameStarted: true,
     };
   });
 }
