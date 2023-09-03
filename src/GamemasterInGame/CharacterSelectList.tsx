@@ -64,7 +64,6 @@ export function CharacterSelectList({
 
     state.additionalCharacters.set((curr) => [
       ...curr,
-      // TODO: prevent duplicates
       {
         id: newCharacterName,
         name: newCharacterName,
