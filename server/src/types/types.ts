@@ -3,7 +3,7 @@ export interface Script {
   characters: Character[]
 }
 export interface UnifiedGame {
-  players: Record<string, string>
+  playersToNames: Record<string, string>
   playersToRoles: PlayerSet
   gmSecretHash: string
   gameStarted: boolean

@@ -56,6 +56,10 @@ export function CharacterSelectList({
       { imageSrc: "", name: newCharacterName, team: newCharacterTeam },
     ]);
     setNewCharacterName("");
+    state.selectedRoles.set((curr) => ({
+      ...curr,
+      [newCharacterName]: true,
+    }));
   }
   return (
     <Flex gap="2" direction="column">
@@ -68,7 +72,7 @@ export function CharacterSelectList({
               onClick={() => {
                 state.selectedRoles.set((selectedroles) => ({
                   ...selectedroles,
-                  [name]: true,
+                  [name]: !selectedroles[name],
                 }));
               }}
             />
