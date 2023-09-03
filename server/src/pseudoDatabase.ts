@@ -9,7 +9,7 @@ export function gameExists (gameId: string): boolean {
 }
 export function getGame (gameId: string): UnifiedGame | undefined {
   if (!gameDB[gameId]) {
-    throw new Error(`${gameId} not found`)
+    throw new Error(`${JSON.stringify(gameId)} not found`)
   }
   return gameDB[gameId].readOnce()
 }
@@ -24,7 +24,7 @@ export function addGame (gameId: string): boolean {
 }
 
 export function subscribeToGame (gameId: string | number, callback: (value: UnifiedGame | null) => void): () => void {
-  if (gameDB[gameId]) {
+  if (!gameDB[gameId]) {
     throw new Error(`${gameId} not found`)
   }
 

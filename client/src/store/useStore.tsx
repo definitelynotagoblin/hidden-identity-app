@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { doc, setDoc } from "firebase/firestore";
 import { generate } from "random-words";
 import { useNavigate } from "react-router-dom";
 
 import { useMemo } from "react";
 import { Self, UnifiedGame } from "./Game";
 import { useSecretKey } from "./secretKey";
-import { unifiedGamesCollection } from "./firebaseStore";
 import { useAction, useChangeGame, useGame } from "./GameContext";
 import { mapObject } from "../utils/mapObject";
+import { buildUrl } from "./urlBuilder";
 
 export function usePlayers() {
   const { game } = useGame();
@@ -44,19 +43,23 @@ export function useSelf() {
 
 export function useCreateGame() {
   const playerSecretHash = useMemo(() => generate(3).join("-"), []);
-  const gmSecretHash = useMemo(() => generate(3).join("-"), []);
   const navigate = useNavigate();
   return useAction(async () => {
-    await setDoc(
-      doc(unifiedGamesCollection, playerSecretHash),
-      {
-        gmSecretHash: gmSecretHash,
-        players: {},
-        playersToRoles: {},
-      } as UnifiedGame,
-      { merge: true },
-    );
-    navigate(`/${playerSecretHash}/gm/${gmSecretHash}`);
+    const response = await fetch(buildUrl(`/game`), {
+      method: "post",
+      body: JSON.stringify({
+        hash: playerSecretHash,
+      }),
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+    const parsedResponse = (await response.json()) as UnifiedGame;
+    navigate(`/${playerSecretHash}/gm/${parsedResponse.gmSecretHash}`);
   });
 }
 
