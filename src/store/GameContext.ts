@@ -24,6 +24,7 @@ export function useAction<Args extends Array<unknown>>(
   isLoading: boolean,
   succeeded: boolean,
   action: (...args: Args) => void,
+  clear: () => void,
 ] {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>("");
@@ -47,6 +48,10 @@ export function useAction<Args extends Array<unknown>>(
       } finally {
         setIsLoading(false);
       }
+    },
+    () => {
+      setError("");
+      setIsLoading(false);
     },
   ];
 }
