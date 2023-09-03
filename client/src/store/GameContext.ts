@@ -1,7 +1,5 @@
 import { createContext, useContext, useState } from "react";
 import { UnifiedGame } from "./Game";
-import { doc, setDoc } from "firebase/firestore";
-import { unifiedGamesCollection } from "./firebaseStore";
 
 export interface GameContext {
   gameId: string;
@@ -54,22 +52,4 @@ export function useAction<Args extends Array<unknown>>(
       setIsLoading(false);
     },
   ];
-}
-export function useChangeGame<Args extends Array<unknown>>(
-  updateGame: (game: UnifiedGame, ...args: Args) => UnifiedGame,
-) {
-  const { gameId, game } = useGame();
-
-  return useAction(async (...args: Args) => {
-    if (!gameId) {
-      throw new Error("calling change game without a gameID");
-    }
-    await setDoc(
-      doc(unifiedGamesCollection, gameId),
-      updateGame({ ...game }, ...args),
-      {
-        merge: true,
-      },
-    );
-  });
 }

@@ -5,38 +5,32 @@ import { useNavigate } from "react-router-dom";
 import { useMemo } from "react";
 import { Self, UnifiedGame } from "./Game";
 import { useSecretKey } from "./secretKey";
-import { useAction, useChangeGame, useGame } from "./GameContext";
+import { useAction, useGame } from "./GameContext";
 import { mapObject } from "../utils/mapObject";
 import { buildUrl } from "./urlBuilder";
+import axios, { AxiosError } from "axios";
 
-export function usePlayers() {
-  const { game } = useGame();
-  return game?.players;
-}
-export function useRoles() {
-  const { game } = useGame();
-  return game?.playersToRoles;
-}
-
-export function usePlayersToRoles() {
+export function usePlayerNamesToRoles() {
   const { game } = useGame();
   if (!game) {
     throw new Error("ASDFASDF");
   }
-  const { players, playersToRoles } = game;
-  return mapObject(players, (hash, name) => [name, playersToRoles[hash]]);
+  const { playersToNames, playersToRoles } = game;
+  return mapObject(playersToNames, (hash, name) => [
+    name,
+    playersToRoles[hash],
+  ]);
 }
 
 export function useSelf() {
   const secretKey = useSecretKey();
-  const players = usePlayers();
-  const roles = useRoles();
+  const { game } = useGame();
   return (
     secretKey &&
-    players !== null &&
+    game &&
     ({
-      name: players?.[secretKey],
-      role: roles?.[secretKey],
+      name: game.playersToNames[secretKey],
+      role: game.playersToRoles[secretKey],
     } as Self)
   );
 }
@@ -63,45 +57,71 @@ export function useCreateGame() {
   });
 }
 
+class NameTakenError extends Error {
+  constructor(name: string) {
+    super(`Name Taken: ${name}`);
+  }
+}
 export function useAddPlayer() {
   const secretKey = useSecretKey();
+  const { gameId } = useGame();
 
-  return useChangeGame((game, playerName: string) => {
-    if (Object.values(game.players ?? []).includes(playerName)) {
-      throw new Error("Player name taken");
+  return useAction(async (playerName: string) => {
+    if (!gameId) {
+      throw new Error("GameId not ready");
     }
-    return {
-      ...game,
-      players: {
-        [secretKey]: playerName,
-      },
-    };
+
+    try {
+      const response = await axios.post(buildUrl("/add_player"), {
+        playerName,
+        playerId: secretKey,
+        gameId,
+      });
+      if (response.status !== 200) {
+        throw new Error(response.statusText);
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error && e.message.match(/name taken/i)) {
+        throw new NameTakenError(playerName);
+      }
+
+      throw e;
+    }
   });
 }
 
+class PlayerCountError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
 export function useDistributeRoles() {
-  return useChangeGame((game, availableRoles: string[]) => {
-    const playerIds = Object.keys(game.players);
-    if (playerIds.length !== availableRoles.length) {
-      throw new Error("Please select a role for each player");
+  const { gameId } = useGame();
+
+  return useAction(async (availableRoles: string[]) => {
+    if (!gameId) {
+      throw new Error("GameId not ready");
     }
 
-    const randomRoleSet = availableRoles
-      .map((item) => ({ item, random: Math.random() }))
-      .sort((a, b) => a.random - b.random)
-      .map((element) => element.item)
-      .reduce(
-        (acc, item, idx) => ({
-          ...acc,
-          [playerIds[idx]]: item,
-        }),
-        {} as Record<string, string>,
-      );
-    return {
-      ...game,
-      playersToRoles: randomRoleSet,
-      gameStarted: true,
-    };
+    try {
+      const response = await axios.post(buildUrl("/assign_roles"), {
+        roles: availableRoles,
+        gameId,
+      });
+      if (response.status !== 200) {
+        throw new Error(response.statusText);
+      }
+    } catch (e: unknown) {
+      if (
+        e instanceof AxiosError &&
+        e.response?.data?.match(/count does not match/i)
+      ) {
+        throw new PlayerCountError(e.response.data);
+      }
+
+      throw e;
+    }
   });
 }
+
 export { useGame };

@@ -1,16 +1,10 @@
 import { type Application } from 'express-ws'
-import { addGame, gameExists, getGame } from '../pseudoDatabase.ts'
+import { addGame, addPlayer, assignRoles, getGame } from '../database/gameDB.ts'
 
 export function useGame (app: Application): void {
+  addGame('test-game')
   app.post('/game', (_req, res) => {
     const gameId = _req.body.hash
-
-    if (!gameId || gameExists(gameId)) {
-      console.log(`rejecting ${gameId}`)
-      res.status(400)
-      res.send({ error: 'game already exists' })
-      return
-    }
 
     addGame(gameId)
     const game = getGame(gameId)
@@ -19,12 +13,33 @@ export function useGame (app: Application): void {
     res.send(game)
   })
 
-  app.get('/game/:id', (_req, res) => {
-    const gameId = _req.params.id
+  app.get('/game/:gameId', (_req, res) => {
+    const gameId = _req.params.gameId
     const game = getGame(gameId)
     if (!game) {
       res.status(404)
     }
     res.send(game)
+  })
+
+  app.post('/add_player', (req, res) => {
+    const { playerId, playerName, gameId } = req.body
+    addPlayer(gameId, playerId, playerName)
+    res.status(200)
+    res.send({
+      playerId,
+      playerName,
+    })
+  })
+  app.post('/assign_roles', (req, res) => {
+    const { roles, gameId } = req.body
+    const message = assignRoles(gameId, roles)
+    if (!message) {
+      res.status(200)
+      res.send({})
+    } else {
+      res.status(400)
+      res.send(message)
+    }
   })
 }

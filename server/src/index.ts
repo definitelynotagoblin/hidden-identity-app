@@ -36,6 +36,15 @@ app.use((err: Error, _req: unknown, res: Response, _next: unknown): void => {
   res.status(500).send('Something broke!')
 })
 
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.status(200)
+    res.send()
+  } else {
+    next()
+  }
+})
+
 useRoutes(app)
 
 app.listen(port, () => {

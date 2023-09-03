@@ -4,31 +4,33 @@ import {
   useCharacterSelectState,
 } from "./CharacterSelectList";
 import { useGame } from "../store/GameContext";
-import { useDistributeRoles, usePlayersToRoles } from "../store/useStore";
+import { useDistributeRoles, usePlayerNamesToRoles } from "../store/useStore";
 import TeamDistributionBar from "./TeamDistributionBar";
 import { useState } from "react";
 
 function StartGameButton({
   onClick,
   isLoading,
+  disabled,
   gameStarted,
 }: {
   onClick: () => void;
   isLoading: boolean;
+  disabled: boolean;
   gameStarted?: boolean;
 }) {
   if (gameStarted) {
     return <div>Game has started.</div>;
   }
   return (
-    <Button onClick={onClick}>
+    <Button disabled={disabled} onClick={onClick}>
       {isLoading ? "Doing some work..." : "Distribute Roles"}
     </Button>
   );
 }
 export function Lobby() {
   const { game } = useGame();
-  const playersToRoles = usePlayersToRoles();
+  const playersToRoles = usePlayerNamesToRoles();
   const [selectedTab, setSelectedTab] = useState<"roles" | "players">("roles");
   const [distributeRolesError, isLoading, , distributeRoles, clear] =
     useDistributeRoles();
@@ -39,6 +41,9 @@ export function Lobby() {
   )
     .filter(([, value]) => value)
     .map(([key]) => key);
+
+  const gameStartable =
+    availableRolesList.length === Object.keys(playersToRoles).length;
 
   if (!game) {
     return <div>Loading...</div>;
@@ -64,7 +69,7 @@ export function Lobby() {
           Roles
         </Tabs.Trigger>
         <Tabs.Trigger value="players">
-          Players ({Object.keys(game.players).length})
+          Players ({Object.keys(game.playersToNames).length})
         </Tabs.Trigger>
       </Tabs.List>
 
@@ -79,6 +84,7 @@ export function Lobby() {
         </Flex>
 
         <StartGameButton
+          disabled={!gameStartable}
           gameStarted={game.gameStarted}
           isLoading={isLoading}
           onClick={() => distributeRoles(availableRolesList)}
@@ -96,6 +102,7 @@ export function Lobby() {
           ))}
         </Flex>
         <StartGameButton
+          disabled={!gameStartable}
           gameStarted={game.gameStarted}
           isLoading={isLoading}
           onClick={() => distributeRoles(availableRolesList)}
