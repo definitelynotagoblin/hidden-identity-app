@@ -49,9 +49,8 @@ function GamemasterLanding({ providedGMHash }: { providedGMHash: string }) {
           if (customScript) {
             setRoles(customScript);
           } else {
-            const roleIds = Scripts.scripts.find(
-              ({ name }) => name === script,
-            )!.characters;
+            const roleIds = Scripts.scripts.find(({ name }) => name === script)
+              ?.characters;
             setRoles(roleIds);
           }
           setMode("lobby");

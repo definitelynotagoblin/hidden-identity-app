@@ -10,6 +10,7 @@ import {
 import GameData from "../assets/game_data/scripts.json";
 import React from "react";
 import { CharacterId } from "../types/script";
+import "./ScriptSelect.css";
 
 interface ScriptSelectProps {
   handleSubmit: (script: string, customScript?: CharacterId[]) => void;
@@ -25,80 +26,74 @@ function ScriptSelect({
   const [errorMsg, setErrorMsg] = React.useState("");
 
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (selectedScript === "custom-script") {
-          try {
-            const parsedCustomScript = ValidateCustomScript(customScript);
-            handleSubmit(selectedScript, parsedCustomScript);
-            setErrorMsg("");
-          } catch (e) {
-            const error = e as Error;
-            setErrorMsg(error.message);
-          }
-        } else {
-          handleSubmit(selectedScript);
-        }
-      }}
-    >
-      <Flex gap="4" direction={"column"} align={"center"}>
-        <Grid gap="3" columns="1" align={"center"}>
-          {GameData.scripts.map(({ name, imageSrc }) => (
-            <Box
-              key={name}
-              style={{
-                border: name === selectedScript ? "4px solid darkred" : "none",
-                borderRadius: "15px",
-              }}
-              onClick={() => {
-                setSelectedScript(name);
-              }}
-            >
-              <img width="300px" src={imageSrc} />
-            </Box>
-          ))}
-          {enableCustom && (
-            <Box
-              key="custom-script"
-              style={{
-                textAlign: "center",
-                border:
-                  "custom-script" === selectedScript
-                    ? "4px solid darkred"
-                    : "none",
-                borderRadius: "15px",
-              }}
-              onClick={() => {
-                setSelectedScript("custom-script");
-              }}
-            >
-              <label htmlFor="custom-input">
-                <Heading as="h1">CUSTOM</Heading>
-              </label>
-              {"custom-script" === selectedScript && (
-                <TextArea
-                  id="custom-input"
-                  placeholder="[ { 'id': 'Washerwoman' }, ... ]"
-                  value={customScript}
-                  onChange={(event) => {
-                    setCustomScript(event.currentTarget.value);
-                  }}
-                ></TextArea>
-              )}
-            </Box>
-          )}
-        </Grid>
-        {errorMsg && (
-          <Callout.Root>
-            <Callout.Text>{errorMsg}</Callout.Text>
-          </Callout.Root>
+    <Flex gap="4" direction={"column"} align={"center"}>
+      <Grid gap="3" columns="1" align={"center"}>
+        {GameData.scripts.map(({ name, imageSrc }) => (
+          <Box
+            key={name}
+            className={name === selectedScript ? "border" : undefined}
+            onClick={() => {
+              setSelectedScript(name);
+            }}
+          >
+            <img width="300px" src={imageSrc} />
+          </Box>
+        ))}
+        {enableCustom && (
+          <Box
+            key="custom-script"
+            className={
+              "custom-script" === selectedScript ? "border" : undefined
+            }
+            onClick={() => {
+              setSelectedScript("custom-script");
+            }}
+          >
+            <label htmlFor="custom-input">
+              <Heading as="h1">CUSTOM</Heading>
+            </label>
+            {"custom-script" === selectedScript && (
+              <TextArea
+                id="custom-input"
+                placeholder="[ { 'id': 'Washerwoman' }, ... ]"
+                value={customScript}
+                onChange={(event) => {
+                  setCustomScript(event.currentTarget.value);
+                }}
+              ></TextArea>
+            )}
+          </Box>
         )}
-        <Button type="submit" disabled={!selectedScript}>
-          Select Script
-        </Button>
-      </Flex>
-    </form>
+      </Grid>
+      {errorMsg && (
+        <Callout.Root>
+          <Callout.Text>{errorMsg}</Callout.Text>
+        </Callout.Root>
+      )}
+      <Button
+        onClick={(event) => {
+          event.preventDefault();
+          if (selectedScript === "custom-script") {
+            try {
+              const parsedCustomScript = ValidateCustomScript(customScript);
+              handleSubmit(selectedScript, parsedCustomScript);
+              setErrorMsg("");
+            } catch (e) {
+              const error = e as Error;
+              setErrorMsg(error.message);
+            }
+          } else {
+            handleSubmit(selectedScript);
+          }
+        }}
+        onPaste={(event) =>
+          JSON.stringify(JSON.parse(event.currentTarget.value), null, 4)
+        }
+        disabled={!selectedScript}
+      >
+        Select Script
+      </Button>
+    </Flex>
   );
 }
 
@@ -107,8 +102,13 @@ function ValidateCustomScript(script: string) {
   if (!Array.isArray(parsed)) {
     throw new Error("JSON is not an array.");
   }
-  if (parsed.filter((obj) => !obj["id"]).length > 0) {
-    throw new Error("Role element missing 'id'");
+  const badCharacters = parsed.filter((obj) => !obj["id"]);
+  if (badCharacters.length > 0) {
+    throw new Error(
+      `"Role element ${JSON.stringify(
+        badCharacters[0],
+      )} is invalid.  Should match { 'id': '<role_name>' }"`,
+    );
   }
   return parsed;
 }
