@@ -2,6 +2,7 @@ export interface UnifiedGame {
   players: Record<string, string>;
   playersToRoles: PlayerSet;
   gmSecretHash: string;
+  gameStarted: boolean;
 }
 
 export interface PlayerSet {

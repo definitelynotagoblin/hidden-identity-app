@@ -1,36 +1,12 @@
-import {
-  Button,
-  Callout,
-  Flex,
-  Heading,
-  Link,
-  Separator,
-} from "@radix-ui/themes";
-import PlayerRoleMap from "./PlayerRoleMap";
-import ConfirmButton from "./ConfirmButton";
-import CharacterSelectList from "./CharacterSelectList";
-import React, { useState } from "react";
-import { useCreateGame, useDistributeRoles, useGame } from "../store/useStore";
-import PlayerList from "./PlayerList";
-import ScriptSelectList from "./ScriptSelectList";
+import { useState } from "react";
+import { useGame } from "../store/useStore";
 import { useParams } from "react-router-dom";
 import { GameProvider } from "../store/GameContextProvider";
 import { Lobby } from "./Lobby";
 import { ScriptSelect } from "./ScriptSelect";
-
-function NewGameButton() {
-  const [, , , createGame] = useCreateGame();
-
-  return (
-    <ConfirmButton
-      handleConfirm={() => {
-        createGame();
-      }}
-    >
-      New Game
-    </ConfirmButton>
-  );
-}
+import { Character, CharacterId } from "../types/script";
+import Scripts from "../assets/game_data/scripts.json";
+import Roles from "../assets/game_data/roles.json";
 
 export function GameMasterRoot() {
   const { gameId, gmHash } = useParams();
@@ -40,89 +16,51 @@ export function GameMasterRoot() {
     </GameProvider>
   );
 }
-function GamemasterLanding({ providedGMHash }: { providedGMHash: string }) {
-  const [mode, _setMode] = useState<"lobby" | "scriptSelect" | "other">(
-    "lobby",
-  );
-  const [showCharSelect, setShowCharSelect] = React.useState(false);
-  const [scriptSelected, setScriptSelected] = React.useState<string>("");
-  const { gameId, game } = useGame();
 
-  const availableRoles = [];
-  const [, , , distributeRoles] = useDistributeRoles();
+function GamemasterLanding({ providedGMHash }: { providedGMHash: string }) {
+  const [mode, setMode] = useState<"lobby" | "scriptSelect" | "other">(
+    "scriptSelect",
+  );
+  const [characters, setCharacters] = useState<Character[]>([]);
+
+  const { game } = useGame();
+
+  function setRoles(roleIds: CharacterId[] = []) {
+    const ids = roleIds?.map(({ id }) => id);
+    console.log(ids);
+    const roles = Roles.characters.filter(({ id }) => ids?.includes(id));
+    setCharacters(roles);
+  }
 
   if (!game) {
     return <div>Loading...</div>;
   }
-  const { players, playersToRoles } = game;
   if (providedGMHash !== game.gmSecretHash) {
     return <div>You are in the wrong place</div>;
   }
 
   if (mode === "lobby") {
-    return <Lobby />;
+    return <Lobby rolesList={characters} />;
   }
 
   if (mode === "scriptSelect") {
-    return <ScriptSelect handleSubmit={() => {}} />;
-  }
-  if (showCharSelect)
     return (
-      <Flex direction="column" gap="3">
-        <Heading size={"4"} align={"center"} color="tomato">
-          Scripts
-        </Heading>
-        <ScriptSelectList
-          handleSubmit={(selected) => setScriptSelected(selected)}
-        />
-        <Separator size="4" color="tomato" />
-        <Heading size={"4"} align={"center"} color="tomato">
-          Roles
-        </Heading>
-        <CharacterSelectList
-          selectedScript={scriptSelected}
-          handleFormSubmit={() => {
-            setShowCharSelect(false);
-          }}
-        />
-      </Flex>
-    );
-
-  if (Object.keys(playersToRoles ?? {}).length === 0) {
-    const playersJoinedCount = Object.keys(players ?? {}).length;
-    const expectedPlayerCount = availableRoles?.length ?? "X";
-
-    return (
-      <Flex direction={"column"}>
-        <NewGameButton />
-        <PlayerList players={players} />
-        <Callout.Root>
-          <Callout.Text>
-            {playersJoinedCount} / {expectedPlayerCount} players joined.
-          </Callout.Text>
-        </Callout.Root>
-        <Button
-          onClick={() => distributeRoles([])}
-          disabled={playersJoinedCount !== expectedPlayerCount}
-        >
-          Distribute Roles
-        </Button>
-        <Link href={`/${gameId}`}>Join game</Link>
-      </Flex>
+      <ScriptSelect
+        handleSubmit={(script, customScript) => {
+          if (customScript) {
+            setRoles(customScript);
+          } else {
+            const roleIds = Scripts.scripts.find(({ name }) => name === script)
+              ?.characters;
+            setRoles(roleIds);
+          }
+          setMode("lobby");
+        }}
+      />
     );
   }
 
-  return (
-    <Flex direction="column">
-      <NewGameButton />
-      {players && playersToRoles ? (
-        <PlayerRoleMap players={players} roles={playersToRoles} />
-      ) : (
-        <span>Loading...</span>
-      )}
-      <Link href={`/${gameId}`}>Join game</Link>
-    </Flex>
-  );
+  return <div>uh oh</div>;
 }
 
 export default GamemasterLanding;

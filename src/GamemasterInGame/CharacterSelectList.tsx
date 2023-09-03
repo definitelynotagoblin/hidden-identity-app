@@ -1,78 +1,78 @@
+import { useState } from "react";
+import { Character, CharacterType, CharacterTypes } from "../types/script";
 import {
-  Button,
   Checkbox,
   Flex,
   IconButton,
+  Select,
   TextField,
 } from "@radix-ui/themes";
-import { Character } from "../types/script";
-import React from "react";
-import GameScripts from "../assets/game_data/scripts.json";
-import CharacterRoles from "../assets/game_data/roles.json";
-import TeamDistributionBar from "./TeamDistributionBar";
 
-interface CharacterSelectListProps {
-  selectedScript: string;
-  handleFormSubmit: () => void;
+interface StateContainer<T> {
+  value: T;
+  set: (newValue: T | ((prevState: T) => T)) => void;
 }
 
-function CharacterSelectList({
-  selectedScript,
-  handleFormSubmit,
-}: CharacterSelectListProps) {
-  const [state, setState] = React.useState<Record<string, boolean>>({});
-  const [additionalCharacters, setAdditionalCharacters] = React.useState<
-    Character[]
-  >([]);
-  const [newCharacterName, setNewCharacterName] = React.useState<string>("");
-  const scriptRoles = GameScripts.scripts
-    .find(({ name }) => selectedScript === name)!
-    .characters.map(({ id }) => id);
-  const characters = CharacterRoles.characters.filter(({ id }) =>
-    scriptRoles.includes(id),
+export interface CharacterSelectState {
+  selectedRoles: StateContainer<Record<string, boolean>>;
+  additionalCharacters: StateContainer<Character[]>;
+  characters: Character[];
+}
+
+// doing some wonky shit because we cannot elave the tab mounted when we switch.
+// so if we don't hoist state we lose data when switching tabs.
+export function useCharacterSelectState(
+  availableCharacters?: Character[],
+): CharacterSelectState {
+  const characters: Character[] = availableCharacters ?? [];
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [additionalCharacters, setAdditionalCharacters] = useState<Character[]>(
+    [],
   );
 
-  //
+  return {
+    selectedRoles: {
+      set: setSelectedRoles,
+      value: selectedRoles,
+    },
+    additionalCharacters: {
+      set: setAdditionalCharacters,
+      value: additionalCharacters,
+    },
+    characters,
+  };
+}
+
+export function CharacterSelectList({
+  state,
+}: {
+  state: CharacterSelectState;
+}) {
+  const [newCharacterName, setNewCharacterName] = useState("");
+  const [newCharacterTeam, setNewCharacterTeam] =
+    useState<CharacterType>("Townsfolk");
   function addNewCharacter() {
-    if (
-      characters.map(({ name }) => name).includes(newCharacterName) ||
-      !newCharacterName
-    ) {
-      return;
-    }
-
-    setAdditionalCharacters((oldCharacters) => [
-      ...oldCharacters,
-      { name: newCharacterName } as Character,
+    state.additionalCharacters.set((curr) => [
+      ...curr,
+      // TODO: prevent duplicates
+      { imageSrc: "", name: newCharacterName, team: newCharacterTeam },
     ]);
-
-    setState((oldState) => ({
-      ...oldState,
-      [newCharacterName]: true,
-    }));
-
     setNewCharacterName("");
   }
-
-  //
   return (
-    <form
-      onSubmit={async (event) => {
-        event.preventDefault();
-        handleFormSubmit();
-        throw new Error("I broke roles, reimplement");
-      }}
-    >
-      <Flex gap="2" direction="column">
-        {[...characters, ...additionalCharacters].map(({ name, imageSrc }) => (
+    <Flex gap="2" direction="column">
+      {[...state.characters, ...state.additionalCharacters.value].map(
+        ({ name, imageSrc }) => (
           <Flex gap="2" align={"center"} key={name}>
             <Checkbox
               id={name}
-              checked={!!state[name]}
+              checked={state.selectedRoles.value[name]}
               onClick={() => {
-                setState((oldState) => ({
-                  ...oldState,
-                  [name]: !oldState[name],
+                state.selectedRoles.set((selectedroles) => ({
+                  ...selectedroles,
+                  [name]: true,
                 }));
               }}
             />
@@ -87,33 +87,38 @@ function CharacterSelectList({
               </label>
             </Flex>
           </Flex>
-        ))}
+        ),
+      )}
 
-        <Flex align={"center"} gap="2">
-          <IconButton type="button" size="1" onClick={addNewCharacter}>
-            +
-          </IconButton>
-          <TextField.Input
-            placeholder="Additional role"
-            value={newCharacterName}
-            onChange={(event) => setNewCharacterName(event.currentTarget.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                addNewCharacter();
-              }
-            }}
-          />
-        </Flex>
-
-        <TeamDistributionBar
-          charsSelected={characters.filter(({ name }) => state[name])}
+      <Flex align={"center"} gap="2">
+        <IconButton type="button" size="1" onClick={addNewCharacter}>
+          +
+        </IconButton>
+        <TextField.Input
+          placeholder="Additional role"
+          value={newCharacterName}
+          onChange={(event) => setNewCharacterName(event.currentTarget.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              addNewCharacter();
+            }
+          }}
         />
-
-        <Button type="submit">BEGIN</Button>
+        <Select.Root
+          onValueChange={(value) => setNewCharacterTeam(value as CharacterType)}
+          defaultValue={newCharacterTeam}
+        >
+          <Select.Trigger variant="soft" color="gray" />
+          <Select.Content>
+            {CharacterTypes.map((type) => (
+              <Select.Item key={type} value={type}>
+                {type}
+              </Select.Item>
+            ))}
+          </Select.Content>
+        </Select.Root>
       </Flex>
-    </form>
+    </Flex>
   );
 }
-
-export default CharacterSelectList;
