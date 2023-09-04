@@ -1,3 +1,4 @@
+import { Button } from "@radix-ui/themes";
 import { useCreateGame } from "../store/useStore";
 
 export function NewGameLanding() {
@@ -7,7 +8,7 @@ export function NewGameLanding() {
     <div>
       {error && <div>error</div>}
       {!isLoading ? (
-        <button onClick={action}>Create Game</button>
+        <Button onClick={action}>Create Game</Button>
       ) : (
         <div>Creating Game please wait</div>
       )}
