@@ -7,6 +7,7 @@ import { useGame } from "../store/GameContext";
 import { useDistributeRoles, usePlayersToRoles } from "../store/useStore";
 import TeamDistributionBar from "./TeamDistributionBar";
 import { useState } from "react";
+import { Character } from "../types/script";
 
 function StartGameButton({
   onClick,
@@ -26,14 +27,19 @@ function StartGameButton({
     </Button>
   );
 }
-export function Lobby() {
+
+export interface LobbyProps {
+  rolesList: Character[];
+}
+
+export function Lobby({ rolesList }: LobbyProps) {
   const { game } = useGame();
   const playersToRoles = usePlayersToRoles();
   const [selectedTab, setSelectedTab] = useState<"roles" | "players">("roles");
   const [distributeRolesError, isLoading, , distributeRoles, clear] =
     useDistributeRoles();
 
-  const characterSelectState = useCharacterSelectState();
+  const characterSelectState = useCharacterSelectState(rolesList);
   const availableRolesList = Object.entries(
     characterSelectState.selectedRoles.value,
   )
@@ -72,7 +78,10 @@ export function Lobby() {
         <Flex direction="column" gap="3" py="3">
           <CharacterSelectList state={characterSelectState} />
           <TeamDistributionBar
-            charsSelected={characterSelectState.characters.filter(
+            charsSelected={[
+              ...characterSelectState.characters,
+              ...characterSelectState.additionalCharacters.value,
+            ].filter(
               ({ name }) => characterSelectState.selectedRoles.value[name],
             )}
           />
