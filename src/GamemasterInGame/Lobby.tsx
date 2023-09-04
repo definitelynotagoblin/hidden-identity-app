@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Character } from "../types/script";
 import { ShareButton } from "./ShareButton";
 import { useParams } from "react-router-dom";
+import { Share1Icon } from "@radix-ui/react-icons";
 
 function StartGameButton({
   onClick,
@@ -102,8 +103,9 @@ export function Lobby({ rolesList }: LobbyProps) {
             }/${gameId}`}
             title="Join Game: Blood on the Clocktower"
             text="Join game: Blood on the Clocktower"
-            label="Share game"
-          />
+          >
+            <Share1Icon /> Invite Players
+          </ShareButton>
         </Flex>
       </Tabs.Content>
       <Tabs.Content value="players">

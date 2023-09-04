@@ -1,13 +1,17 @@
+import React, { ReactNode } from "react";
 import { Button } from "@radix-ui/themes";
+import "./ShareButton.css";
 
 interface ShareProps {
-  label: string;
+  children: ReactNode;
   url: string;
   text: string;
   title: string;
 }
 
-function ShareButton({ label, url, text, title }: ShareProps) {
+function ShareButton({ children, url, text, title }: ShareProps) {
+  const [showSnackbar, setShowSnackbar] = React.useState(false);
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -17,13 +21,20 @@ function ShareButton({ label, url, text, title }: ShareProps) {
       }
     } else {
       navigator.clipboard.writeText(url);
+      setShowSnackbar(true);
+      setTimeout(() => setShowSnackbar(false), 2000);
     }
   };
 
   return (
-    <Button className="share-button" onClick={handleShare}>
-      <span className="share-button-text">{label}</span>
-    </Button>
+    <>
+      <Button onClick={handleShare}>
+        <span>{children}</span>
+      </Button>
+      <div id="snackbar" className={showSnackbar ? "show" : ""}>
+        Link copied to clipboard.
+      </div>
+    </>
   );
 }
 
